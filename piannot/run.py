@@ -6,8 +6,6 @@ from PyQt5.QtCore import pyqtSignal
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import matplotlib.pyplot as plt
 
-import numpy as np
-
 from annotator import Annotator
 
 class MainWindow(qtw.QMainWindow):
@@ -64,34 +62,45 @@ class MainWidget(qtw.QWidget):
         self.setLayout(layout)
         
         
-        self.canvas = ImgCanvas(
-                parent = self, 
-                image = self.annotator.image
-            )
+        self.canvas = ImgCanvas(parent = self)
         layout.addWidget(self.canvas)
         self.canvas.mouse_pressed_signal.connect(self.mouse_pressed_on_canvas)
         
         self.show()
+        self.update()
         
         
     def mouse_pressed_on_canvas(self, x, y):
-        print(f"mose pressed: x: {x:.2f},  y: {y:.2f}")
-        self.canvas.ax.scatter(x, y)
-        self.canvas.draw()
+        self.annotator.add_object(x, y)
+        self.update()
         
     def update(self):
-        self.canvas.image = self.annotator.image
+        ax = self.canvas.ax
+        
+        for to_remove in ax.images + ax.collections:
+            to_remove.remove()
+            
+        
+        ax.imshow(self.annotator.image)
+        ax.scatter(
+            x = [ob.x for ob in self.annotator.objects], 
+            y = [ob.y for ob in self.annotator.objects], 
+            c = "white"
+        )
+        
+        self.canvas.draw()
+        
+        
+        
     
         
 class ImgCanvas(FigureCanvasQTAgg):
     mouse_pressed_signal = pyqtSignal([float, float])
  
-    def __init__(self, parent=None, width=5, height=4, image = None):
+    def __init__(self, parent=None, width=5, height=4):
         fig, self.ax = plt.subplots(figsize=(width, height))
         self._setup_FigureCanvas(parent, fig)
-        
-        self.image = image if image is not None else np.random.rand(13, 10, 3)
-        
+            
         self.setMouseTracking(True)
         
         fig.canvas.mpl_connect("button_press_event", self.onclick)
@@ -105,21 +114,7 @@ class ImgCanvas(FigureCanvasQTAgg):
                 qtw.QSizePolicy.Expanding,
                 qtw.QSizePolicy.Expanding)
         self.updateGeometry()
-        
-    @property
-    def image(self):
-        return self._image
-    @image.setter
-    def image(self, val):
-        self._image = val
-        self._plot()
-        
- 
-    def _plot(self):
-        ax = self.ax
-        ax.imshow(self.image)
-        self.draw()
-        
+            
         
     def onclick(self, event):
         print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
@@ -132,7 +127,11 @@ class ImgCanvas(FigureCanvasQTAgg):
 
         
 if __name__ == '__main__':
-    annotator = Annotator(r"D:\python_source\piannot\data", r"D:\python_source\piannot\data")
+    annotator = Annotator(
+        image_dir = r"D:\python_source\piannot\data", 
+        annotation_dir = r"D:\python_source\piannot\data",
+        cats = ["ball", "head1", "heads2"]
+    )
     app = qtw.QApplication(sys.argv)
     ex = MainWindow(annotator)
     sys.exit(app.exec_())
