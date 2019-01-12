@@ -3,6 +3,8 @@ import PIL
 import numpy as np
 import json
 
+from typing import List
+
 from collections import namedtuple
 Obj = namedtuple("Obj", ['cat', 'x', 'y'])
 
@@ -48,41 +50,44 @@ print(a.to_json())
             
 
 class Annotator:
-    def __init__(self, image_dir, annotation_dir):
+    def __init__(self, image_dir: str, annotation_dir: str , cats: List[str]):
         self._image_dir = image_dir
         self._annotation_dir = annotation_dir
+        self.cats = cats
+        self.active_cat = cats[0]
         
         self.image_file = os.listdir(self._image_dir)[0]
         
+        
     
     @property
-    def annotation_path(self):
+    def annotation_path(self) -> str:
         return os.path.join(
             self._annotation_dir, 
             os.path.splitext(self.image_file)[0] + ".json"
         )
         
     @property
-    def image_path(self):
+    def image_path(self) -> str:
         return os.path.join(self._image_dir, self.image_file)
         
     @property
-    def image_file(self):
+    def image_file(self) -> str:
         return self._image_file
     
     @image_file.setter
-    def image_file(self, val):
+    def image_file(self, val: str):
         self._image_file = val
         self._image = np.array(PIL.Image.open(self.image_path))
         self._annotation = Annotation.load(self.annotation_path)
     
         
     @property
-    def annotation(self):
+    def annotation(self) -> Annotation:
         return self._annotation
     
     @property
-    def image(self):
+    def image(self) -> np.ndarray:
         return self._image
     
     def move(self, step = 1):
@@ -95,5 +100,21 @@ class Annotator:
             i = 0
             
         self.image_file = images[i]
+     
+    def add_object(self, x: int, y: int):
+        self.annotation.add_object(self.active_cat, x, y) 
+        
+    
+    def add_missing(self):
+        self.annotation.add_missing(self.active_cat)
+        
+    @property
+    def objects(self):
+        return self.annotation.objects
+    
+    @property
+    def missing(self):
+        return self.annotation.missing
+    
         
 
