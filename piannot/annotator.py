@@ -4,6 +4,7 @@ import numpy as np
 import json
 
 from typing import List
+from functools import partialmethod
 
 from collections import namedtuple
 Obj = namedtuple("Obj", ['cat', 'x', 'y'])
@@ -90,7 +91,7 @@ class Annotator:
     def image(self) -> np.ndarray:
         return self._image
     
-    def move(self, step = 1):
+    def _move(self, step = 1):
         images = os.listdir(self._image_dir)
         try:
             i = images.index(self.image_file)
@@ -100,6 +101,9 @@ class Annotator:
             i = 0
             
         self.image_file = images[i]
+        
+    next_image = partialmethod(_move, 1)
+    prev_image = partialmethod(_move, -1)
      
     def add_object(self, x: int, y: int):
         self.annotation.add_object(self.active_cat, x, y) 

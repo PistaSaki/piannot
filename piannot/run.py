@@ -39,11 +39,11 @@ class MainWindow(qtw.QMainWindow):
         self.show()
         
     def _next_image(self):
-        self.annotator.move()
+        self.annotator.next_image()
         self.main_widget.update()
         
     def _prev_image(self):
-        self.annotator.move(-1)
+        self.annotator.prev_image()
         self.main_widget.update()
 
 
