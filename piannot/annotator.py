@@ -98,11 +98,11 @@ class Annotator:
     def image_file(self) -> str:
         return self._image_file
     
+    def _save_annotation(self):
+        self._annotation.to_json(path = self.annotation_path)
+        
     @image_file.setter
     def image_file(self, val: str):
-        if hasattr(self, "_annotation"):
-            self._annotation.to_json(path = self.annotation_path)
-        
         self._image_file = val
         self._image = np.array(PIL.Image.open(self.image_path))
         self._annotation = Annotation.load(self.annotation_path)
@@ -137,10 +137,12 @@ class Annotator:
      
     def add_object(self, x: int, y: int):
         self.annotation.add_object(self.active_cat, x, y) 
+        self._save_annotation()
         
     
     def add_missing(self):
         self.annotation.add_missing(self.active_cat)
+        self._save_annotation()
         
     @property
     def objects(self) -> List[dict]:
