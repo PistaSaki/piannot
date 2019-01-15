@@ -3,7 +3,7 @@ import PIL
 import numpy as np
 import json
 
-from typing import List
+from typing import List, Set
 from functools import partialmethod
 
 import logging
@@ -12,34 +12,48 @@ logger = logging.getLogger()
 
 class Annotation:
     def __init__(self, objects = None, missing = None):
-        self.objects = objects or []
-        self.missing = missing or []
+        self.objects = list(objects) or list()
+        self.missing = set(missing) or set()
+        self._check_consistency()
         
     def add_object(self, cat: str, x: int, y: int, unique: bool=True):
         if unique:
             self.objects = [o for o in self.objects if not o["cat"] == cat ]
         self.objects.append({"cat": cat, "x": x, "y": y})
+        self.missing.discard(cat)
     
     def add_missing(self, cat):
-        self.missing.append(cat)
+        self.objects = [o for o in self.objects if not o["cat"] == cat ]
+        self.missing.add(cat)
         
     def _is_empty(self):
         return len(self.objects) == len(self.missing) == 0
 
     
     def to_json(self, path: str = None):
+        self._check_consistency()
+        dic = {
+            "objects": self.objects,
+            "missing": list(self.missing)
+        }
+        
         if path is None:
-            return json.dumps(self.__dict__)
+            return json.dumps(dic)
         else:
             if not self._is_empty():
                 with open(path, "wt") as file:
-                    json.dump(self.__dict__, file)
+                    json.dump(dic, file)
                     
     def __repr__(self):
         return self.to_json()
     
     def __str__(self):
         return self.to_json()
+    
+    def _check_consistency(self):
+        object_cats = set(ob["cat"] for ob in self.objects)
+        problem_cats = self.missing.intersection(object_cats)
+        assert len(problem_cats) == 0, str(problem_cats)
     
     @staticmethod
     def load(path: str):
@@ -54,7 +68,7 @@ class Annotation:
             
 
 class Annotator:
-    def __init__(self, image_dir: str, annotation_dir: str , cats: List[str]):
+    def __init__(self, image_dir:str, annotation_dir:str , cats:List[str]):
         self._image_dir = image_dir
         self._annotation_dir = annotation_dir
         self.cats = cats
@@ -129,12 +143,25 @@ class Annotator:
         self.annotation.add_missing(self.active_cat)
         
     @property
-    def objects(self):
+    def objects(self) -> List[dict]:
         return self.annotation.objects
     
     @property
-    def missing(self):
+    def missing(self) -> Set[str]:
         return self.annotation.missing
+    
+    def get_cat_state_description(self, cat:str = None):
+        cat = cat or self.active_cat
+        
+        if cat in self.annotation.missing:
+            return "MISSING"
+        
+        obs = [ob for ob in self.annotation.objects if ob["cat"] == cat]
+        if len(obs) == 0:
+            return "UNSPECIFIED"
+        
+        return [(int(round(ob["x"])), int(round(ob["y"]))) for ob in obs]
+        
     
         
 
@@ -145,5 +172,5 @@ if __name__ == "__main__":
     annotator = Annotator(
         image_dir = r"D:\python_source\piannot\data", 
         annotation_dir = r"D:\python_source\piannot\data",
-        cats = ["ball", "head1", "heads2"]
+        cats = ["ball", "head1", "head2"]
     )

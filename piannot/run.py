@@ -8,6 +8,10 @@ import matplotlib.pyplot as plt
 
 from annotator import Annotator
 
+import logging
+logger = logging.getLogger()
+
+
 class MainWindow(qtw.QMainWindow):
     def __init__(self, annotator):
         super().__init__()
@@ -22,17 +26,22 @@ class MainWindow(qtw.QMainWindow):
         
         self.statusBar().showMessage('Ready')
         
-        next_image_action = qtw.QAction("Next", self)
+        next_image_action = qtw.QAction("Next_img", self)
         next_image_action.triggered.connect(self._next_image)
         next_image_action.setShortcut("right")
         
-        prev_image_action = qtw.QAction("Prev", self)
+        prev_image_action = qtw.QAction("Prev_img", self)
         prev_image_action.triggered.connect(self._prev_image)
         prev_image_action.setShortcut("left")
+        
+        missing_action = qtw.QAction("Missing", self)
+        missing_action.triggered.connect(self.main_widget.missing_invoked)
+        missing_action.setShortcut("m")
         
         menubar = self.menuBar()
         menubar.addAction(prev_image_action)
         menubar.addAction(next_image_action)
+        menubar.addAction(missing_action)
         
         
         self.setGeometry(300, 300, 350, 200)
@@ -82,12 +91,17 @@ class MainWidget(qtw.QWidget):
         
         
     def cat_item_changed(self, item):
-        print(f"cat_item_changed: {item.text()}")
+        logger.debug(f"cat_item_changed: {item.text()}")
         self.annotator.active_cat = item.text()
         self.update()
         
     def mouse_pressed_on_canvas(self, x, y):
         self.annotator.add_object(x, y)
+        self.update()
+        
+    def missing_invoked(self):
+        logger.debug("missing_invoked")
+        self.annotator.add_missing()
         self.update()
         
     def update(self):
@@ -98,7 +112,10 @@ class MainWidget(qtw.QWidget):
             
         
         ax.imshow(self.annotator.image)
-        ax.set_title(self.annotator.active_cat)
+        ax.set_title(
+            f"{self.annotator.active_cat}: "
+            f"{self.annotator.get_cat_state_description()}"
+        )
         
         objects = [ob for ob in self.annotator.objects 
                    if ob["cat"] == self.annotator.active_cat]        
@@ -147,10 +164,13 @@ class ImgCanvas(FigureCanvasQTAgg):
 
         
 if __name__ == '__main__':
+    import sys
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    
     annotator = Annotator(
         image_dir = r"D:\python_source\piannot\data", 
         annotation_dir = r"D:\python_source\piannot\data",
-        cats = ["ball", "head1", "heads2"]
+        cats = ["ball", "head1", "head2"]
     )
     app = qtw.QApplication(sys.argv)
     ex = MainWindow(annotator)
