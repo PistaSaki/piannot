@@ -1,6 +1,6 @@
 import sys
 import PyQt5.QtWidgets as qtw
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -45,6 +45,7 @@ class MainWindow(qtw.QMainWindow):
     def _prev_image(self):
         self.annotator.prev_image()
         self.main_widget.update()
+        
 
 
 class MainWidget(qtw.QWidget):
@@ -58,17 +59,32 @@ class MainWidget(qtw.QWidget):
         
         
     def _initUI(self):               
-        layout = qtw.QVBoxLayout()
+        layout = qtw.QHBoxLayout()
         self.setLayout(layout)
+        
+        splitter = qtw.QSplitter(Qt.Horizontal)
+        layout.addWidget(splitter)
+        
+        self.cat_select = qtw.QListWidget()
+        splitter.addWidget(self.cat_select)
+        for cat in annotator.cats:
+            self.cat_select.addItem(cat)
+        self.cat_select.currentItemChanged.connect(self.cat_item_changed)
         
         
         self.canvas = ImgCanvas(parent = self)
-        layout.addWidget(self.canvas)
+        splitter.addWidget(self.canvas)
         self.canvas.mouse_pressed_signal.connect(self.mouse_pressed_on_canvas)
+        
         
         self.show()
         self.update()
         
+        
+    def cat_item_changed(self, item):
+        print(f"cat_item_changed: {item.text()}")
+        self.annotator.active_cat = item.text()
+        self.update()
         
     def mouse_pressed_on_canvas(self, x, y):
         self.annotator.add_object(x, y)
@@ -82,9 +98,13 @@ class MainWidget(qtw.QWidget):
             
         
         ax.imshow(self.annotator.image)
+        ax.set_title(self.annotator.active_cat)
+        
+        objects = [ob for ob in self.annotator.objects 
+                   if ob["cat"] == self.annotator.active_cat]        
         ax.scatter(
-            x = [ob["x"] for ob in self.annotator.objects], 
-            y = [ob["y"] for ob in self.annotator.objects], 
+            x = [ob["x"] for ob in objects], 
+            y = [ob["y"] for ob in objects], 
             c = "white"
         )
         
