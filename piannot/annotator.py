@@ -5,32 +5,50 @@ import json
 
 from typing import List
 from functools import partialmethod
+
+import logging
+logger = logging.getLogger()
         
 
 class Annotation:
-    def __init__(self):
-        self.objects = []
-        self.missing = []
+    def __init__(self, objects = None, missing = None):
+        self.objects = objects or []
+        self.missing = missing or []
         
-    def add_object(self, cat: str, x: int, y: int):
+    def add_object(self, cat: str, x: int, y: int, unique: bool=True):
+        if unique:
+            self.objects = [o for o in self.objects if not o["cat"] == cat ]
         self.objects.append({"cat": cat, "x": x, "y": y})
     
     def add_missing(self, cat):
         self.missing.append(cat)
+        
+    def _is_empty(self):
+        return len(self.objects) == len(self.missing) == 0
 
     
     def to_json(self, path: str = None):
         if path is None:
             return json.dumps(self.__dict__)
         else:
-            raise NotImplementedError()
+            if not self._is_empty():
+                with open(path, "wt") as file:
+                    json.dump(self.__dict__, file)
+                    
+    def __repr__(self):
+        return self.to_json()
+    
+    def __str__(self):
+        return self.to_json()
     
     @staticmethod
     def load(path: str):
         if not os.path.exists(path):
             return Annotation()
         else:
-            raise NotImplementedError()
+            with open(path, "rt") as file:
+                dic = json.load(file)
+            return Annotation(**dic)
             
             
             
@@ -42,10 +60,15 @@ class Annotator:
         self.cats = cats
         self.active_cat = cats[0]
         
-        self.image_file = os.listdir(self._image_dir)[0]
+        self.image_file = self.image_list[0]
         
         
-    
+    @property
+    def image_list(self):
+        extensions = {".jpg"}
+        all_files =  os.listdir(self._image_dir)
+        return [f for f in  all_files if os.path.splitext(f)[-1] in extensions]
+        
     @property
     def annotation_path(self) -> str:
         return os.path.join(
@@ -63,9 +86,17 @@ class Annotator:
     
     @image_file.setter
     def image_file(self, val: str):
+        if hasattr(self, "_annotation"):
+            self._annotation.to_json(path = self.annotation_path)
+        
         self._image_file = val
         self._image = np.array(PIL.Image.open(self.image_path))
         self._annotation = Annotation.load(self.annotation_path)
+        
+        logger.debug( 
+            f"Changed image to {self.image_file} "
+            f"and annotation to {self.annotation}."
+        )
     
         
     @property
@@ -77,7 +108,7 @@ class Annotator:
         return self._image
     
     def _move(self, step = 1):
-        images = os.listdir(self._image_dir)
+        images = self.image_list
         try:
             i = images.index(self.image_file)
             i += step
@@ -107,3 +138,12 @@ class Annotator:
     
         
 
+if __name__ == "__main__":
+    import sys
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    
+    annotator = Annotator(
+        image_dir = r"D:\python_source\piannot\data", 
+        annotation_dir = r"D:\python_source\piannot\data",
+        cats = ["ball", "head1", "heads2"]
+    )
