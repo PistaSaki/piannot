@@ -83,8 +83,8 @@ class MainWidget(qtw.QWidget):
         
         ax.imshow(self.annotator.image)
         ax.scatter(
-            x = [ob.x for ob in self.annotator.objects], 
-            y = [ob.y for ob in self.annotator.objects], 
+            x = [ob["x"] for ob in self.annotator.objects], 
+            y = [ob["y"] for ob in self.annotator.objects], 
             c = "white"
         )
         

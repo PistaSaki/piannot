@@ -5,18 +5,6 @@ import json
 
 from typing import List
 from functools import partialmethod
-
-from collections import namedtuple
-Obj = namedtuple("Obj", ['cat', 'x', 'y'])
-
-class CustomEncoder(json.JSONEncoder):
-    def default(self, o):
-        print("aaa")
-            
-        if isinstance(o, Obj):
-            return "aaa"
-        
-        return json.JSONEncoder.default(self, o)
         
 
 class Annotation:
@@ -25,7 +13,7 @@ class Annotation:
         self.missing = []
         
     def add_object(self, cat: str, x: int, y: int):
-        self.objects.append(Obj(cat, x, y))
+        self.objects.append({"cat": cat, "x": x, "y": y})
     
     def add_missing(self, cat):
         self.missing.append(cat)
@@ -43,9 +31,6 @@ class Annotation:
             return Annotation()
         else:
             raise NotImplementedError()
-            
-a = Annotation()
-print(a.to_json())
             
             
             
