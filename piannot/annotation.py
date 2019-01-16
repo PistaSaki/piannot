@@ -8,8 +8,8 @@ class Annotation:
     mising: Set[str]
     
     def __init__(self, objects = None, missing = None):
-        self.objects = list(objects) or list()
-        self.missing = set(missing) or set()
+        self.objects = list(objects) if objects is not None else list()
+        self.missing = set(missing) if missing is not None else set()
         self._check_consistency()
         
     def add_object(self, cat: str, x: int, y: int, unique: bool=True):
@@ -59,3 +59,14 @@ class Annotation:
             with open(path, "rt") as file:
                 dic = json.load(file)
             return Annotation(**dic)
+        
+    def get_cat_state_description(self, cat:str):
+        if cat in self.missing:
+            return "MISSING"
+        
+        obs = [ob for ob in self.objects if ob["cat"] == cat]
+        if len(obs) == 0:
+            return "UNSPECIFIED"
+        
+        return [(int(round(ob["x"])), int(round(ob["y"]))) for ob in obs]
+    

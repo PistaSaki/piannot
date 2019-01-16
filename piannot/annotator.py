@@ -98,15 +98,7 @@ class Annotator:
     
     def get_cat_state_description(self, cat:str = None):
         cat = cat or self.active_cat
-        
-        if cat in self.annotation.missing:
-            return "MISSING"
-        
-        obs = [ob for ob in self.annotation.objects if ob["cat"] == cat]
-        if len(obs) == 0:
-            return "UNSPECIFIED"
-        
-        return [(int(round(ob["x"])), int(round(ob["y"]))) for ob in obs]
+        return self.annotation.get_cat_state_description(cat)
         
     
         
