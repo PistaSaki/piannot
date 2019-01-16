@@ -106,6 +106,13 @@ class MainWidget(qtw.QWidget):
         splitter.addWidget(self.canvas)
         self.canvas.mouse_pressed_signal.connect(self.mouse_pressed_on_canvas)
         
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 8)
+        
+        splitter2.setStretchFactor(0, 1)
+        splitter2.setStretchFactor(1, 8)
+        
+        
         
         self.show()
         self.update()
