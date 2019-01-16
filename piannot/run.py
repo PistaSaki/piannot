@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 from annotator import Annotator
 from image_database import ImageDatabase
+from annotation_database import AnnotationDatabase
 
 import logging
 logger = logging.getLogger()
@@ -169,8 +170,8 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     
     annotator = Annotator(
-        image_db = ImageDatabase(r"D:\python_source\piannot\data"), 
-        annotation_dir = r"D:\python_source\piannot\data",
+        image_db = ImageDatabase(r"..\data"), 
+        annotation_db = AnnotationDatabase(r"..\data"),
         cats = ["ball", "head1", "head2"]
     )
     

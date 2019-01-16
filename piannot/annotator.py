@@ -6,30 +6,37 @@ from functools import partialmethod
 
 from annotation import Annotation
 from image_database import ImageDatabase
+from annotation_database import AnnotationDatabase
 
 import logging
 logger = logging.getLogger()
             
 
 class Annotator:
-    def __init__(self, image_db: ImageDatabase, annotation_dir:str , cats:List[str]):
+    _image_db: ImageDatabase
+    _annotation_db: AnnotationDatabase
+    
+    _image_file: str
+    _annotation: Annotation
+    _image: np.ndarray
+    
+    cats: List[str]
+    active_cat: str
+    
+    
+    def __init__(self, image_db: ImageDatabase, annotation_db: AnnotationDatabase , cats:List[str]):
         self._image_db = image_db
-        self._annotation_dir = annotation_dir
+        self._annotation_db = annotation_db
+        
         self.cats = cats
         self.active_cat = cats[0]
         
         self.image_file = self._image_db.key_list[0]
         
-    @property
-    def annotation_path(self) -> str:
-        return os.path.join(
-            self._annotation_dir, 
-            os.path.splitext(self.image_file)[0] + ".json"
-        )
             
     def _save_annotation(self):
-        self._annotation.to_json(path = self.annotation_path)
-    
+        self._annotation_db.save_annotation(annotation=self.annotation, key=self.image_file)
+        
     @property
     def image_file(self) -> str:
         return self._image_file
@@ -38,7 +45,7 @@ class Annotator:
     def image_file(self, val: str):
         self._image_file = val
         self._image = self._image_db.get_image(self._image_file)
-        self._annotation = Annotation.load(self.annotation_path)
+        self._annotation = self._annotation_db.load_annotation(self._image_file)
         
         logger.debug( 
             f"Changed image to {self.image_file} "
@@ -107,7 +114,7 @@ if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     
     annotator = Annotator(
-        image_db = ImageDatabase(r"D:\python_source\piannot\data"), 
-        annotation_dir = r"D:\python_source\piannot\data",
+        image_db = ImageDatabase(r"..\data"), 
+        annotation_db = AnnotationDatabase(r"..\data"),
         cats = ["ball", "head1", "head2"]
     )
