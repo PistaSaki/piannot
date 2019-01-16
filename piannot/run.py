@@ -27,11 +27,11 @@ class MainWindow(qtw.QMainWindow):
         self.statusBar().showMessage('Ready')
         
         next_image_action = qtw.QAction("Next_img", self)
-        next_image_action.triggered.connect(self._next_image)
+        next_image_action.triggered.connect(self.main_widget.next_image)
         next_image_action.setShortcut("right")
         
         prev_image_action = qtw.QAction("Prev_img", self)
-        prev_image_action.triggered.connect(self._prev_image)
+        prev_image_action.triggered.connect(self.main_widget.prev_image)
         prev_image_action.setShortcut("left")
         
         missing_action = qtw.QAction("Missing", self)
@@ -47,13 +47,6 @@ class MainWindow(qtw.QMainWindow):
         self.setGeometry(300, 300, 350, 200)
         self.show()
         
-    def _next_image(self):
-        self.annotator.next_image()
-        self.main_widget.update()
-        
-    def _prev_image(self):
-        self.annotator.prev_image()
-        self.main_widget.update()
         
 
 
@@ -89,21 +82,7 @@ class MainWidget(qtw.QWidget):
         self.show()
         self.update()
         
-        
-    def cat_item_changed(self, item):
-        logger.debug(f"cat_item_changed: {item.text()}")
-        self.annotator.active_cat = item.text()
-        self.update()
-        
-    def mouse_pressed_on_canvas(self, x, y):
-        self.annotator.add_object(x, y)
-        self.update()
-        
-    def missing_invoked(self):
-        logger.debug("missing_invoked")
-        self.annotator.add_missing()
-        self.update()
-        
+                
     def update(self):
         ax = self.canvas.ax
         
@@ -126,6 +105,28 @@ class MainWidget(qtw.QWidget):
         )
         
         self.canvas.draw()
+        
+    def next_image(self):
+        self.annotator.next_image()
+        self.update()
+        
+    def prev_image(self):
+        self.annotator.prev_image()
+        self.update()
+    
+    def cat_item_changed(self, item):
+        logger.debug(f"cat_item_changed: {item.text()}")
+        self.annotator.active_cat = item.text()
+        self.update()
+        
+    def mouse_pressed_on_canvas(self, x, y):
+        self.annotator.add_object(x, y)
+        self.update()
+        
+    def missing_invoked(self):
+        logger.debug("missing_invoked")
+        self.annotator.add_missing()
+        self.update()
         
         
         
@@ -164,7 +165,6 @@ class ImgCanvas(FigureCanvasQTAgg):
 
         
 if __name__ == '__main__':
-    import sys
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     
     annotator = Annotator(
