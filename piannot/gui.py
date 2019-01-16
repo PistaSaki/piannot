@@ -58,7 +58,11 @@ class MainWindow(qtw.QMainWindow):
         self.show()
         
         
-
+def _set_list_item_from_text(lst: qtw.QListWidget, text:str):
+    lst.setCurrentItem(
+            lst.findItems(text, Qt.MatchExactly)[0]
+        )
+    
 
 class MainWidget(qtw.QWidget):
     annotator: Annotator
@@ -79,17 +83,23 @@ class MainWidget(qtw.QWidget):
         splitter = qtw.QSplitter(Qt.Horizontal)
         layout.addWidget(splitter)
         
-        cat_select = qtw.QListWidget()
-        splitter.addWidget(cat_select)
+        splitter2 = qtw.QSplitter(Qt.Vertical)
+        splitter.addWidget(splitter2)
+        
+        
+        cat_list = qtw.QListWidget()
+        splitter2.addWidget(cat_list)
         for cat in self.annotator.cats:
-            cat_select.addItem(cat)
-            
-        cat_select.setCurrentItem(
-            cat_select.findItems(
-                self.annotator.active_cat, Qt.MatchExactly
-            )[0]
-        )
-        cat_select.currentItemChanged.connect(self.cat_item_changed)
+            cat_list.addItem(cat)
+        _set_list_item_from_text(cat_list, self.annotator.active_cat)
+        cat_list.currentItemChanged.connect(self.cat_list_item_changed)
+        
+        image_list = qtw.QListWidget()
+        splitter2.addWidget(image_list)
+        for key in self.annotator.get_image_keys():
+            image_list.addItem(key)
+        _set_list_item_from_text(image_list, self.annotator.image_key)
+        image_list.currentItemChanged.connect(self.image_list_item_changed)
         
         
         self.canvas = ImgCanvas(parent = self)
@@ -132,9 +142,14 @@ class MainWidget(qtw.QWidget):
         self.annotator.prev_image()
         self.update()
     
-    def cat_item_changed(self, item):
-        logger.debug(f"cat_item_changed: {item.text()}")
+    def cat_list_item_changed(self, item):
+        logger.debug(f"cat_list_item_changed: {item.text()}")
         self.annotator.active_cat = item.text()
+        self.update()
+        
+    def image_list_item_changed(self, item):
+        logger.debug(f"image_list_item_changed: {item.text()}")
+        self.annotator.image_key = item.text()
         self.update()
         
     def mouse_pressed_on_canvas(self, x, y):

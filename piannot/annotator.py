@@ -60,6 +60,9 @@ class Annotator:
     def image(self) -> np.ndarray:
         return self._image
     
+    def get_image_keys(self) -> List[str]:
+        return self._image_db.key_list
+    
     def _move(self, step = 1):
         images = self._image_db.key_list
         try:
