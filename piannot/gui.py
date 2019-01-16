@@ -5,6 +5,8 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import matplotlib.pyplot as plt
 
+from annotator import Annotator
+
 import logging
 logger = logging.getLogger()
 
@@ -35,10 +37,21 @@ class MainWindow(qtw.QMainWindow):
         missing_action.triggered.connect(self.main_widget.missing_invoked)
         missing_action.setShortcut("m")
         
+        auto_next_image_checker = qtw.QAction("Auto_Next", self, checkable = True)
+        auto_next_image_checker.setChecked(self.main_widget.auto_next_image)
+        auto_next_image_checker.triggered.connect(
+                self.main_widget.set_auto_next_image)        
+        
+        
         menubar = self.menuBar()
-        menubar.addAction(prev_image_action)
-        menubar.addAction(next_image_action)
-        menubar.addAction(missing_action)
+        navigationMenu = menubar.addMenu('Navigation')
+        annotationMenu = menubar.addMenu('Annotation')
+        
+        navigationMenu.addAction(prev_image_action)
+        navigationMenu.addAction(next_image_action)
+        navigationMenu.addAction(auto_next_image_checker)
+        
+        annotationMenu.addAction(missing_action)
         
         
         self.setGeometry(300, 300, 350, 200)
@@ -48,6 +61,8 @@ class MainWindow(qtw.QMainWindow):
 
 
 class MainWidget(qtw.QWidget):
+    annotator: Annotator
+    auto_next_image: bool = False
     
     def __init__(self, annotator):
         super().__init__()
@@ -64,11 +79,17 @@ class MainWidget(qtw.QWidget):
         splitter = qtw.QSplitter(Qt.Horizontal)
         layout.addWidget(splitter)
         
-        self.cat_select = qtw.QListWidget()
-        splitter.addWidget(self.cat_select)
+        cat_select = qtw.QListWidget()
+        splitter.addWidget(cat_select)
         for cat in self.annotator.cats:
-            self.cat_select.addItem(cat)
-        self.cat_select.currentItemChanged.connect(self.cat_item_changed)
+            cat_select.addItem(cat)
+            
+        cat_select.setCurrentItem(
+            cat_select.findItems(
+                self.annotator.active_cat, Qt.MatchExactly
+            )[0]
+        )
+        cat_select.currentItemChanged.connect(self.cat_item_changed)
         
         
         self.canvas = ImgCanvas(parent = self)
@@ -119,11 +140,19 @@ class MainWidget(qtw.QWidget):
     def mouse_pressed_on_canvas(self, x, y):
         self.annotator.add_object(x, y)
         self.update()
+        if self.auto_next_image:
+            self.next_image()
         
     def missing_invoked(self):
         logger.debug("missing_invoked")
         self.annotator.add_missing()
         self.update()
+        if self.auto_next_image:
+            self.next_image()
+        
+    def set_auto_next_image(self, state):
+        self.auto_next_image = state
+        
         
         
         
