@@ -97,19 +97,18 @@ class MainWidget(qtw.QWidget):
         _set_list_item_from_text(cat_list, self.annotator.active_cat)
         cat_list.currentItemChanged.connect(self.cat_list_item_changed)
         
-        image_list = qtw.QListWidget()
+        image_list = self._image_list = qtw.QListWidget()
         splitter2.addWidget(image_list)
-        ok_icon = QtGui.QIcon("ok.png")
+        
+        self._ok_icon = QtGui.QIcon("ok.png")
+        px = QtGui.QPixmap(16,16)
+        px.fill(Qt.transparent)
+        self._empty_icon = QtGui.QIcon(px)
+        
 
         for key in self.annotator.get_image_keys():
             item = qtw.QListWidgetItem(key)
-            annotation = self.annotator._annotation_db.load_annotation(key)
-            if annotation.get_cat_state_description(self.annotator.active_cat) != "UNSPECIFIED":
-                item.setIcon(ok_icon)
-            
             image_list.addItem(item)
-            
-            
             
         _set_list_item_from_text(image_list, self.annotator.image_key)
         image_list.currentItemChanged.connect(self.image_list_item_changed)
@@ -126,11 +125,22 @@ class MainWidget(qtw.QWidget):
         splitter2.setStretchFactor(1, 8)
         
         
-        
         self.show()
         self.update()
+     
         
-                
+    def _update_image_icons(self):
+        image_list = self._image_list
+        for i in range(image_list.count()):
+            item = image_list.item(i)
+            key = item.text()
+            annotation = self.annotator._annotation_db.load_annotation(key)
+            cat_state = annotation.get_cat_state_description(self.annotator.active_cat)
+            if  cat_state != "UNSPECIFIED":
+                item.setIcon(self._ok_icon)
+            else:
+                item.setIcon(self._empty_icon)
+            
     def update(self):
         ax = self.canvas.ax
         
@@ -153,6 +163,10 @@ class MainWidget(qtw.QWidget):
         )
         
         self.canvas.draw()
+        
+        _set_list_item_from_text(self._image_list, self.annotator.image_key)
+        
+        self._update_image_icons()
         
     def next_image(self):
         self.annotator.next_image()
