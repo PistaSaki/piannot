@@ -1,5 +1,6 @@
 import PyQt5.QtWidgets as qtw
 from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5 import QtGui
 
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -9,6 +10,8 @@ from annotator import Annotator
 
 import logging
 logger = logging.getLogger()
+
+            
 
 
 class MainWindow(qtw.QMainWindow):
@@ -57,7 +60,7 @@ class MainWindow(qtw.QMainWindow):
         self.setGeometry(300, 300, 350, 200)
         self.show()
         
-        
+            
 def _set_list_item_from_text(lst: qtw.QListWidget, text:str):
     lst.setCurrentItem(
             lst.findItems(text, Qt.MatchExactly)[0]
@@ -96,8 +99,18 @@ class MainWidget(qtw.QWidget):
         
         image_list = qtw.QListWidget()
         splitter2.addWidget(image_list)
+        ok_icon = QtGui.QIcon("ok.png")
+
         for key in self.annotator.get_image_keys():
-            image_list.addItem(key)
+            item = qtw.QListWidgetItem(key)
+            annotation = self.annotator._annotation_db.load_annotation(key)
+            if annotation.get_cat_state_description(self.annotator.active_cat) != "UNSPECIFIED":
+                item.setIcon(ok_icon)
+            
+            image_list.addItem(item)
+            
+            
+            
         _set_list_item_from_text(image_list, self.annotator.image_key)
         image_list.currentItemChanged.connect(self.image_list_item_changed)
         
