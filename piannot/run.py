@@ -7,6 +7,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import matplotlib.pyplot as plt
 
 from annotator import Annotator
+from image_database import ImageDatabase
 
 import logging
 logger = logging.getLogger()
@@ -168,10 +169,11 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     
     annotator = Annotator(
-        image_dir = r"D:\python_source\piannot\data", 
+        image_db = ImageDatabase(r"D:\python_source\piannot\data"), 
         annotation_dir = r"D:\python_source\piannot\data",
         cats = ["ball", "head1", "head2"]
     )
+    
     app = qtw.QApplication(sys.argv)
     ex = MainWindow(annotator)
     sys.exit(app.exec_())

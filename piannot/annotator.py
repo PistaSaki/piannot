@@ -6,6 +6,8 @@ import json
 from typing import List, Set
 from functools import partialmethod
 
+from image_database import ImageDatabase
+
 import logging
 logger = logging.getLogger()
         
@@ -68,20 +70,13 @@ class Annotation:
             
 
 class Annotator:
-    def __init__(self, image_dir:str, annotation_dir:str , cats:List[str]):
-        self._image_dir = image_dir
+    def __init__(self, image_db: ImageDatabase, annotation_dir:str , cats:List[str]):
+        self._image_db = image_db
         self._annotation_dir = annotation_dir
         self.cats = cats
         self.active_cat = cats[0]
         
-        self.image_file = self.image_list[0]
-        
-        
-    @property
-    def image_list(self):
-        extensions = {".jpg"}
-        all_files =  os.listdir(self._image_dir)
-        return [f for f in  all_files if os.path.splitext(f)[-1] in extensions]
+        self.image_file = self._image_db.key_list[0]
         
     @property
     def annotation_path(self) -> str:
@@ -89,22 +84,18 @@ class Annotator:
             self._annotation_dir, 
             os.path.splitext(self.image_file)[0] + ".json"
         )
-        
-    @property
-    def image_path(self) -> str:
-        return os.path.join(self._image_dir, self.image_file)
-        
+            
+    def _save_annotation(self):
+        self._annotation.to_json(path = self.annotation_path)
+    
     @property
     def image_file(self) -> str:
         return self._image_file
-    
-    def _save_annotation(self):
-        self._annotation.to_json(path = self.annotation_path)
         
     @image_file.setter
     def image_file(self, val: str):
         self._image_file = val
-        self._image = np.array(PIL.Image.open(self.image_path))
+        self._image = self._image_db.get_image(self._image_file)
         self._annotation = Annotation.load(self.annotation_path)
         
         logger.debug( 
@@ -122,7 +113,7 @@ class Annotator:
         return self._image
     
     def _move(self, step = 1):
-        images = self.image_list
+        images = self._image_db.key_list
         try:
             i = images.index(self.image_file)
             i += step
@@ -146,10 +137,12 @@ class Annotator:
         
     @property
     def objects(self) -> List[dict]:
+        """Objects of current annotation."""
         return self.annotation.objects
     
     @property
     def missing(self) -> Set[str]:
+        """Missing categories in current annotation."""
         return self.annotation.missing
     
     def get_cat_state_description(self, cat:str = None):
@@ -172,7 +165,7 @@ if __name__ == "__main__":
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     
     annotator = Annotator(
-        image_dir = r"D:\python_source\piannot\data", 
+        image_db = ImageDatabase(r"D:\python_source\piannot\data"), 
         annotation_dir = r"D:\python_source\piannot\data",
         cats = ["ball", "head1", "head2"]
     )
