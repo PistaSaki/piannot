@@ -2,7 +2,9 @@ import os
 from annotation import Annotation
 
 class AnnotationDatabase:
-    def __init__(self, annotation_dir):
+    _annotation_dir: str
+        
+    def __init__(self, annotation_dir: str):
         self._annotation_dir = annotation_dir
         
     def _get_annotation_path(self, key: str) -> str:
@@ -14,6 +16,6 @@ class AnnotationDatabase:
     def load_annotation(self, key: str) -> Annotation:
         return Annotation.load(self._get_annotation_path(key))
     
-    def save_annotation(self, annotation, key):
+    def save_annotation(self, annotation: Annotation, key: str):
         annotation.to_json(path = self._get_annotation_path(key))
     

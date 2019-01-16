@@ -16,7 +16,7 @@ class Annotator:
     _image_db: ImageDatabase
     _annotation_db: AnnotationDatabase
     
-    _image_file: str
+    _image_key: str
     _annotation: Annotation
     _image: np.ndarray
     
@@ -31,24 +31,24 @@ class Annotator:
         self.cats = cats
         self.active_cat = cats[0]
         
-        self.image_file = self._image_db.key_list[0]
+        self.image_key = self._image_db.key_list[0]
         
             
     def _save_annotation(self):
-        self._annotation_db.save_annotation(annotation=self.annotation, key=self.image_file)
+        self._annotation_db.save_annotation(annotation=self.annotation, key=self.image_key)
         
     @property
-    def image_file(self) -> str:
-        return self._image_file
+    def image_key(self) -> str:
+        return self._image_key
         
-    @image_file.setter
-    def image_file(self, val: str):
-        self._image_file = val
-        self._image = self._image_db.get_image(self._image_file)
-        self._annotation = self._annotation_db.load_annotation(self._image_file)
+    @image_key.setter
+    def image_key(self, val: str):
+        self._image_key = val
+        self._image = self._image_db.get_image(self._image_key)
+        self._annotation = self._annotation_db.load_annotation(self._image_key)
         
         logger.debug( 
-            f"Changed image to {self.image_file} "
+            f"Changed image to {self.image_key} "
             f"and annotation to {self.annotation}."
         )
     
@@ -64,13 +64,13 @@ class Annotator:
     def _move(self, step = 1):
         images = self._image_db.key_list
         try:
-            i = images.index(self.image_file)
+            i = images.index(self.image_key)
             i += step
             i = max(0, min(i, len(images) - 1))
         except ValueError:
             i = 0
             
-        self.image_file = images[i]
+        self.image_key = images[i]
         
     next_image = partialmethod(_move, 1)
     prev_image = partialmethod(_move, -1)

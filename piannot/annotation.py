@@ -1,7 +1,12 @@
 import json
 import os
 
+from typing import List, Set
+
 class Annotation:
+    objects: List[dict]
+    mising: Set[str]
+    
     def __init__(self, objects = None, missing = None):
         self.objects = list(objects) or list()
         self.missing = set(missing) or set()

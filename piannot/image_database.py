@@ -2,12 +2,16 @@ import os
 import numpy as np
 import PIL
 
+from typing import List
+
 class ImageDatabase:
+    _image_dir: str
+    
     def __init__(self, image_dir: str):
         self._image_dir = image_dir
         
     @property
-    def key_list(self):
+    def key_list(self) -> List[str]:
         extensions = {".jpg"}
         all_files =  os.listdir(self._image_dir)
         return [
