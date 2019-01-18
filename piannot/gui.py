@@ -11,7 +11,7 @@ from annotator import Annotator
 import logging
 logger = logging.getLogger()
 
-            
+import os           
 
 
 class MainWindow(qtw.QMainWindow):
@@ -100,7 +100,11 @@ class MainWidget(qtw.QWidget):
         image_list = self._image_list = qtw.QListWidget()
         splitter2.addWidget(image_list)
         
-        self._ok_icon = QtGui.QIcon("ok.png")
+        _ok_icon_path = os.path.join(
+                        os.path.dirname(os.path.abspath(__file__)),
+                        "ok.png")
+        logger.debug(f"ok_icon_path = {_ok_icon_path}")
+        self._ok_icon = QtGui.QIcon(_ok_icon_path)
         px = QtGui.QPixmap(16,16)
         px.fill(Qt.transparent)
         self._empty_icon = QtGui.QIcon(px)
