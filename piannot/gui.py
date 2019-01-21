@@ -216,6 +216,7 @@ class ImgCanvas(FigureCanvasQTAgg):
  
     def __init__(self, parent=None, width=5, height=4):
         fig, self.ax = plt.subplots(figsize=(width, height))
+        fig.tight_layout(pad = 0.5)
         self._setup_FigureCanvas(parent, fig)
             
         self.setMouseTracking(True)
