@@ -47,8 +47,8 @@ if __name__ == "__main__":
         )
         parser.add_argument("-s", "--step", 
             type = int,
-            help = "We save frame with index i iff i is divisible by step.",
-            default = 25
+            help = "We save frame with index i iff i is divisible by step. Defaults to 1.",
+            default = 1
         )
         args = parser.parse_args()
         
