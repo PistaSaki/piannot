@@ -27,6 +27,7 @@ class AnnotationDatabase:
     _annotations: List[Annotation]
     
     def __init__(self, annotation_dir: str):
+        os.makedirs(annotation_dir, exist_ok=True)
         self._annotation_dir = annotation_dir
         self._preload_annotations()
         
