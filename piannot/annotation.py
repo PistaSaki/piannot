@@ -3,6 +3,9 @@ import os
 
 from typing import List, Set
 
+class AnnotationLoadingError(Exception):
+    pass
+
 class Annotation:
     objects: List[dict]
     mising: Set[str]
@@ -56,9 +59,13 @@ class Annotation:
         if not os.path.exists(path):
             return Annotation()
         else:
-            with open(path, "rt") as file:
-                dic = json.load(file)
-            return Annotation(**dic)
+            try:
+                with open(path, "rt") as file:
+                    dic = json.load(file)
+                return Annotation(**dic)
+            except Exception as exc:
+                msg = (f"Error loading annotation from {path}.")
+                raise AnnotationLoadingError(msg) from exc
         
     def get_cat_state_description(self, cat:str):
         if cat in self.missing:
