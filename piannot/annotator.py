@@ -83,8 +83,11 @@ class Annotator:
         
     
     def add_missing(self):
+        logger.debug("Entered `Annotator.add_missing`.")
         self.annotation.add_missing(self.active_cat)
         self._save_annotation()
+        logger.debug("Finished `Annotator.add_missing`.")
+        
         
     @property
     def objects(self) -> List[dict]:

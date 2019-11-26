@@ -23,8 +23,9 @@ def _get_config() -> dict:
     return config
 
 def _get_logger() -> logging.Logger:
-    logger = logging.getLogger()
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+    logger = logging.getLogger()    
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG,
+        format='%(asctime)s %(message)s')
     return logger
 
 config = _get_config()

@@ -134,6 +134,7 @@ class MainWidget(qtw.QWidget):
      
         
     def _update_image_icons(self):
+        logger.debug("Start updating image icons.")
         image_list = self._image_list
         for i in range(image_list.count()):
             item = image_list.item(i)
@@ -144,8 +145,12 @@ class MainWidget(qtw.QWidget):
                 item.setIcon(self._ok_icon)
             else:
                 item.setIcon(self._empty_icon)
+        logger.debug("Finished updating image icons.")
+        
             
     def update(self):
+        logger.debug("Entered `MainWidget.update`.")
+        
         ax = self.canvas.ax
         
         for to_remove in ax.images + ax.collections:
@@ -171,6 +176,8 @@ class MainWidget(qtw.QWidget):
         _set_list_item_from_text(self._image_list, self.annotator.image_key)
         
         self._update_image_icons()
+        logger.debug("Finished `MainWidget.update`.")
+        
         
     def next_image(self):
         self.annotator.next_image()
@@ -191,17 +198,22 @@ class MainWidget(qtw.QWidget):
         self.update()
         
     def mouse_pressed_on_canvas(self, x, y):
+        logger.debug("Start `mouse_pressed_on_canvas`.")
         self.annotator.add_object(x, y)
-        self.update()
         if self.auto_next_image:
-            self.next_image()
+            self.annotator.next_image()
+        self.update()
+        logger.debug("Finished `mouse_pressed_on_canvas`.")
+        
         
     def missing_invoked(self):
-        logger.debug("missing_invoked")
+        logger.debug("Start `missing_invoked`.")
         self.annotator.add_missing()
-        self.update()
         if self.auto_next_image:
-            self.next_image()
+            self.annotator.next_image()
+        self.update()
+        logger.debug("Finished `missing_invoked`.")
+        
         
     def set_auto_next_image(self, state):
         self.auto_next_image = state
@@ -235,7 +247,7 @@ class ImgCanvas(FigureCanvasQTAgg):
             
         
     def onclick(self, event):
-        print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+        logging.debug('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
               ('double' if event.dblclick else 'single', event.button,
                event.x, event.y, event.xdata, event.ydata)) 
         self.mouse_pressed_signal.emit(event.xdata, event.ydata)
