@@ -1,71 +1,77 @@
-import os
-import PIL
-import moviepy.editor
-from typing import Tuple
+from pathlib import Path
+import itertools as itt
 
-def extract_frames_from_one_video(video_path: str, out_folder: str, condition = lambda i: True):
-    print(f"Extracting frames from {video_path} to {out_folder}.")
-    if not os.path.exists(out_folder):
-        os.makedirs(out_folder)
-    
-    clip = moviepy.editor.VideoFileClip(video_path)
+import numpy as np
+import PIL.Image
+from typing import Tuple, Iterator
+
+from moviepy.video.io.VideoFileClip import VideoFileClip
+
+
+def video_frames(path: Path, t_start=0, t_end=None) -> Iterator[np.ndarray]:
+    """Video frames iterator that releases the resources correctly."""
+    clip = VideoFileClip(str(path))
     try:
-        for i, frame in enumerate(clip.iter_frames()):
-            if condition(i):
-                out_path = os.path.join(out_folder, "frame_{:0>5d}.jpg".format(i))
-                img = PIL.Image.fromarray(frame)
-                img.save(out_path)
-    finally:    
+        subclip = clip.subclip(t_start=t_start, t_end=t_end)
+        yield from subclip.iter_frames()
+    finally:
         ## https://stackoverflow.com/questions/43966523/getting-oserror-winerror-6-the-handle-is-invalid-in-videofileclip-function
         clip.reader.close()
         clip.audio.reader.close_proc()
-        
 
-def extract_frames_from_video_folder(video_folder, parent_frame_folder, condition = lambda i: True):
-    video_files = [f for f in os.listdir(video_folder) 
-                    if os.path.splitext(f)[1] == ".mp4"]
-    
-    print(f"Found {len(video_files)} mp4 videos.")
-    
-    for video_name in video_files:
-        extract_frames_from_one_video(
-            video_path= os.path.join(video_folder, video_name),
-            out_folder = os.path.join(
-                parent_frame_folder, os.path.splitext(video_name)[0]
-            ),
-            condition= condition
-        )
 
-if __name__ == "__main__": 
-    def _retrieve_cmd_line_args() -> Tuple[str, str, int]:
-        import argparse
-        parser = argparse.ArgumentParser()
-        parser.add_argument("video_folder", help = "folder containig input videos")
-        parser.add_argument("parent_frame_folder", 
-            nargs = "?",
-            help = "Folder where to write frames. If not present, use video_folder."
-        )
-        parser.add_argument("-s", "--step", 
-            type = int,
-            help = "We save frame with index i iff i is divisible by step. Defaults to 1.",
-            default = 1
-        )
-        args = parser.parse_args()
-        
-        video_folder = args.video_folder
-        parent_frame_folder = args.parent_frame_folder 
-        if parent_frame_folder is None:
-            parent_frame_folder = video_folder
-        step = args.step
-        
-        return video_folder, parent_frame_folder, step
+def _save_frame(i: int, frame: np.array, out_folder: Path) -> None:
+    out_folder.mkdir(parents=True, exist_ok=True)
+    out_path = out_folder / f"frame_{i:0>5d}.jpg"
+    img = PIL.Image.fromarray(frame)
+    img.save(out_path)
 
-    video_folder, parent_frame_folder, step = _retrieve_cmd_line_args()
-    
-    extract_frames_from_video_folder(
-        video_folder = video_folder,
-        parent_frame_folder = parent_frame_folder,
-        condition = lambda i: i % step == 0
-    )
 
-    
+def extract_frames_from_one_video(video_path: Path, out_folder: Path, step: int = 1, divide: int = None):
+    print(f"Extracting frames from {video_path} to {out_folder}.")
+
+    fr = enumerate(video_frames(video_path))
+    fr = itt.islice(fr, None, None, step)
+
+    if not divide:
+        for i, frame in fr:
+            _save_frame(i, frame, out_folder=out_folder)
+    else:
+        for i, frame in fr:
+            start_i = divide * (i // divide)
+            end_i = start_i + divide - 1
+            sub_folder = f"frames_{start_i:0>5d}-{end_i:0>5d}"
+            _save_frame(i, frame, out_folder=out_folder / sub_folder)
+
+
+def _retrieve_cmd_line_args() -> Tuple[Path, Path, int, int]:
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("video_folder", help="folder containig input videos")
+    parser.add_argument("parent_frame_folder", help="Folder where to write frames.")
+    parser.add_argument("-s", "--step", type=int,
+                        help="We save frame with index i iff i is divisible by step. Defaults to 1.",
+                        default=1
+                        )
+    parser.add_argument("--divide", type=int,
+                        help="We divide the frames into folders with specified number of frames.",
+                        default=None
+                        )
+    args = parser.parse_args()
+
+    video_folder = Path(args.video_folder)
+    parent_frame_folder = Path(args.parent_frame_folder) if args.parent_frame_folder is not None else video_folder
+
+    return video_folder, parent_frame_folder, args.step, args.divide
+
+
+def _main():
+    video_folder, parent_frame_folder, step, divide = _retrieve_cmd_line_args()
+
+    for video_path in video_folder.glob("**/*.mp4"):
+        out_folder = parent_frame_folder / video_path.relative_to(video_folder).with_suffix("")
+        extract_frames_from_one_video(video_path, out_folder, step, divide)
+
+
+if __name__ == "__main__":
+    _main()
