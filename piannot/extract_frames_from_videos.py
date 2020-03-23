@@ -7,6 +7,8 @@ from typing import Tuple, Iterator
 
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
+from piannot import data_dir
+
 
 def video_frames(path: Path, t_start=0, t_end=None) -> Iterator[np.ndarray]:
     """Video frames iterator that releases the resources correctly."""
@@ -47,8 +49,8 @@ def extract_frames_from_one_video(video_path: Path, out_folder: Path, step: int 
 def _retrieve_cmd_line_args() -> Tuple[Path, Path, int, int]:
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("video_folder", help="folder containig input videos")
-    parser.add_argument("parent_frame_folder", help="Folder where to write frames.")
+    parser.add_argument("--video_folder", default=None, help="folder containig input videos")
+    parser.add_argument("--parent_frame_folder", default=None, help="Folder where to write frames.")
     parser.add_argument("-s", "--step", type=int,
                         help="We save frame with index i iff i is divisible by step. Defaults to 1.",
                         default=1
@@ -59,8 +61,8 @@ def _retrieve_cmd_line_args() -> Tuple[Path, Path, int, int]:
                         )
     args = parser.parse_args()
 
-    video_folder = Path(args.video_folder)
-    parent_frame_folder = Path(args.parent_frame_folder) if args.parent_frame_folder is not None else video_folder
+    video_folder = Path(args.video_folder or data_dir / "videos")
+    parent_frame_folder = Path(args.parent_frame_folder or data_dir / "frames")
 
     return video_folder, parent_frame_folder, args.step, args.divide
 
