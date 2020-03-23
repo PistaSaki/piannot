@@ -2,3 +2,4 @@ numpy
 Pillow
 moviepy
 PyQt5
+matplotlib

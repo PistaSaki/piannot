@@ -3,9 +3,9 @@ import numpy as np
 from typing import List, Set
 from functools import partialmethod
 
-from annotation import Annotation
-from image_database import ImageDatabase
-from annotation_database import AnnotationDatabase
+from piannot.annotation import Annotation
+from piannot.image_database import ImageDatabase
+from piannot.annotation_database import AnnotationDatabase
 
 import logging
 logger = logging.getLogger()
