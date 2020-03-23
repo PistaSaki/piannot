@@ -23,14 +23,18 @@ def _choose_frame_dir(parent: qtw.QWidget, home_dir: Path, current_dir: Path) ->
     while True:
         frame_dir = QFileDialog.getExistingDirectory(
             parent=parent, caption="Select Directory", directory=str(current_dir))
+        if not frame_dir:  # selection has been cancelled
+            return current_dir
         frame_dir = Path(frame_dir)
-
+        logger.debug(f"Selected directory: {frame_dir}")
         if home_dir not in frame_dir.parents:
             QMessageBox.warning(parent, "Wrong directory", f"The chosen directory is not subdirectory of {home_dir}.")
+            logger.debug(f"The chosen directory is not subdirectory of {home_dir}.")
             continue
 
         if not any(frame_dir.glob("*.jpg")):
             QMessageBox.warning(parent, "Wrong directory", "The chosen directory does not contain any jpg files.")
+            logger.debug("The chosen directory does not contain any jpg files.")
             continue
 
         break
