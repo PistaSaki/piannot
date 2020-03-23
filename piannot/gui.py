@@ -48,6 +48,10 @@ class MainWindow(qtw.QMainWindow):
         self.annotator_selector = annotator_selector
         self._initUI()
 
+    def _reset_status_bar(self):
+        self.statusBar().showMessage(
+            f"{self.annotator_selector.frame_dir.relative_to(self.annotator_selector.parent_frame_dir)}")
+
     def change_folder(self):
         logging.debug("Change folder invoked.")
         new_frame_dir = _choose_frame_dir(parent=self, home_dir=self.annotator_selector.parent_frame_dir,
@@ -55,6 +59,7 @@ class MainWindow(qtw.QMainWindow):
         logging.debug(f"new_frame_dir: {new_frame_dir}")
         self.annotator_selector.frame_dir = new_frame_dir
         self.main_widget.reset_annotator(self.annotator_selector.get_annotator())
+        self._reset_status_bar()
 
     def _initUI(self):
         self.main_widget = MainWidget(annotator=self.annotator_selector.get_annotator())
@@ -63,7 +68,7 @@ class MainWindow(qtw.QMainWindow):
 
         self.setWindowTitle('Piannot')
 
-        self.statusBar().showMessage('Ready')
+        self._reset_status_bar()
 
         change_folder_action = qtw.QAction("folder", self)
         change_folder_action.triggered.connect(self.change_folder)
